@@ -3,6 +3,7 @@ package com.alganaut.hominid.entity.mellified;
 import com.alganaut.hominid.entity.goal.AttackTurtleEggGoal;
 
 import com.alganaut.hominid.entity.goal.MellifiedSwellGoal;
+import com.alganaut.hominid.registry.sound.HominidSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -12,7 +13,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -29,20 +33,17 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 
 public class Mellified extends Monster {
     public static final EntityDataAccessor<Integer> DATA_SWELL_DIR;
     public int idleAnimationTimeout = 0;
     public final AnimationState attackAnimationState = new AnimationState();
     public final AnimationState idleAnimationState = new AnimationState();
-    public int explosionRadius = 3;
     public int oldSwell;
     public int swell;
-    public int maxSwell = 30;
-    //Cooldown in Game Ticks, 20 tick a second * 45 seconds
-    public int explodeCooldown = 900;
-    public int explodeCounter = 0;
-    public boolean canExplode = true;
+    public int maxSwell = 60;
+    public boolean hasExploded = false;
 
     public Mellified(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -81,7 +82,7 @@ public class Mellified extends Monster {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(4, new AttackTurtleEggGoal(this, 1.0, 3));
-        this.goalSelector.addGoal(2, new MellifiedSwellGoal(this));
+        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1, false));
         this.goalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0));
         this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0, 0.0F));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -89,6 +90,10 @@ public class Mellified extends Monster {
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, true));
+        if (!hasMellifiedExploded())
+        {
+            this.goalSelector.addGoal(3, new MellifiedSwellGoal(this));
+        }
     }
 
     @Override
@@ -119,35 +124,22 @@ public class Mellified extends Monster {
         if (this.level().isClientSide()) {
             this.setupAnimationStates();
         }
-        //Mostly using the Creeper code, check if can explode
-        //Known bugs: Mellified doesn't try to nav to enemy, hiss after exploding despite no reprime
-        if (this.isAlive()) {
+        if (this.isAlive() && !hasMellifiedExploded()) {
             this.oldSwell = this.swell;
             int i = this.getSwellDir();
-            if (i > 0 && this.swell == 0 && canExplode) {
-                this.playSound(SoundEvents.CREEPER_PRIMED, 1.0F, 0.5F);
+            if (i > 0 && this.swell == 0) {
                 this.gameEvent(GameEvent.PRIME_FUSE);
             }
-
             this.swell += i;
             if (this.swell < 0) {
                 this.swell = 0;
             }
 
-            if (this.swell >= this.maxSwell && canExplode) {
+            if (this.swell >= this.maxSwell) {
                 this.swell = this.maxSwell;
+                this.hasExploded = true;
+                this.attackAnimationState.start(this.tickCount);
                 this.explodeMellifiedHead();
-            }
-            if (!this.canExplode)
-            {
-                explodeCounter += 1;
-                if (explodeCounter >= this.explodeCooldown)
-                {
-                    canExplode = true;
-                    this.swell = 0;
-                    explodeCounter = 0;
-
-                }
             }
         }
         super.tick();
@@ -187,24 +179,26 @@ public class Mellified extends Monster {
 
     public void explodeMellifiedHead() {
         if (!this.level().isClientSide) {
-            this.level().explode(this, this.getX(), this.getY(), this.getZ(), this.explosionRadius, Level.ExplosionInteraction.MOB);
+            this.attackAnimationState.stop();
+            this.spawnLingeringCloud();
             this.swell = 0;
-            this.canExplode = false;
+            this.hasExploded = true;
         }
     }
 
-    public void setTarget(@Nullable LivingEntity target) {
-        if (!(target instanceof Goat)) {
-            super.setTarget(target);
-        }
+    private void spawnLingeringCloud() {
+            AreaEffectCloud sporeCloud = new AreaEffectCloud(this.level(), this.getX(), this.getY(), this.getZ());
+            sporeCloud.setRadius(5F);
+            sporeCloud.setDuration(100);
+            sporeCloud.setOwner(this);
+            sporeCloud.setParticle(ParticleTypes.CLOUD);
+            sporeCloud.setRadiusPerTick(-sporeCloud.getRadius() / (float)sporeCloud.getDuration());
+            sporeCloud.addEffect(new MobEffectInstance (MobEffects.MOVEMENT_SLOWDOWN, 200, 1));
+            this.level().addFreshEntity(sporeCloud);
     }
 
-    public boolean hasExploded() {
-        if (canExplode && swell < maxSwell)
-        {
-            return true;
-        }
-        else return false;
+    public boolean hasMellifiedExploded() {
+        return this.hasExploded;
     }
 
     @Override

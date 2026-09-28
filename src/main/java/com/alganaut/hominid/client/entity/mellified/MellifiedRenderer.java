@@ -28,7 +28,7 @@ public class MellifiedRenderer  extends MobRenderer<Mellified, MellifiedModel<Me
 
     @Override
     public ResourceLocation getTextureLocation(Mellified mellified) {
-        return mellified.hasExploded() ? LOCATION : BURST;
+        return mellified.hasMellifiedExploded() ? BURST : LOCATION;
     }
 
     private static class MellifiedHoneyLayer<T extends Mellified, M extends EntityModel<T>> extends RenderLayer<T, M> {
@@ -41,17 +41,7 @@ public class MellifiedRenderer  extends MobRenderer<Mellified, MellifiedModel<Me
 
         @Override
         public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-            RenderType renderType;
-            if (entity.hasExploded())
-            {
-                renderType = RenderType.entityTranslucent(layerTexture);
-
-            }
-            else
-            {
-                 renderType = RenderType.entityTranslucent(layerBurstTexture);
-            }
-
+            RenderType renderType = entity.hasMellifiedExploded() ? RenderType.entityTranslucent(layerBurstTexture) : RenderType.entityTranslucent(layerTexture);
             VertexConsumer vertexConsumer = buffer.getBuffer(renderType);
             this.getParentModel().renderToBuffer(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY);
         }

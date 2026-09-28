@@ -28,6 +28,7 @@ public class HominidSounds {
     public static final Supplier<SoundEvent> VAMPIRE_HURT = registerSoundEvent("vampire_hurt");
     public static final Supplier<SoundEvent> VAMPIRE_DEATH = registerSoundEvent("vampire_death");
     public static final Supplier<SoundEvent> VAMPIRE_SCREAM = registerSoundEvent("vampire_scream");
+    public static final Supplier<SoundEvent> MELLIFIED_BURST = registerSoundEvent("mellified_burst");
     public static final Supplier<SoundEvent> PARANOIA = registerSoundEvent("paranoia");
 
     private static ResourceKey<JukeboxSong> createSong (String name) {

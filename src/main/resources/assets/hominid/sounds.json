@@ -30,5 +30,11 @@
     "sounds": [
       "hominid:vampire_scream"
     ]
+  },
+  "mellified_burst": {
+    "subtitle": "sounds.hominid.mellified_burst",
+    "sounds": [
+      "hominid:mellified_burst"
+    ]
   }
 }
