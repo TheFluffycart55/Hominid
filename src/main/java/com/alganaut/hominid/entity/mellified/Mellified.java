@@ -1,9 +1,8 @@
 package com.alganaut.hominid.entity.mellified;
 
+import com.alganaut.hominid.entity.animation.IdleAnimationController;
 import com.alganaut.hominid.entity.goal.AttackTurtleEggGoal;
 
-import com.alganaut.hominid.entity.goal.MellifiedSwellGoal;
-import com.alganaut.hominid.registry.sound.HominidSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -24,7 +23,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.goat.Goat;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
@@ -32,10 +30,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.gameevent.GameEvent;
 
-import javax.annotation.Nullable;
-import java.util.Collection;
-
 public class Mellified extends Monster {
+    private final IdleAnimationController idleAnimationController = new IdleAnimationController(250);
     public static final EntityDataAccessor<Integer> DATA_SWELL_DIR;
     public int idleAnimationTimeout = 0;
     public final AnimationState attackAnimationState = new AnimationState();
@@ -106,23 +102,10 @@ public class Mellified extends Monster {
         this.entityData.set(DATA_SWELL_DIR, state);
     }
 
-    private void setupAnimationStates() {
-        if (this.getDeltaMovement().horizontalDistance() <= 0.001F) {
-            if (this.idleAnimationTimeout <= 0) {
-                this.idleAnimationTimeout = 250;
-                this.idleAnimationState.start(this.tickCount);
-            } else {
-                --this.idleAnimationTimeout;
-            }
-        } else {
-            this.idleAnimationTimeout = 0;
-            this.idleAnimationState.stop();
-        }
-    }
     @Override
     public void tick() {
-        if (this.level().isClientSide()) {
-            this.setupAnimationStates();
+        if (level().isClientSide()) {
+            idleAnimationController.tick(this, idleAnimationState);
         }
         if (this.isAlive() && !hasMellifiedExploded()) {
             this.oldSwell = this.swell;
@@ -188,9 +171,9 @@ public class Mellified extends Monster {
 
     private void spawnLingeringCloud() {
             AreaEffectCloud sporeCloud = new AreaEffectCloud(this.level(), this.getX(), this.getY(), this.getZ());
+            sporeCloud.setOwner(this);
             sporeCloud.setRadius(5F);
             sporeCloud.setDuration(100);
-            sporeCloud.setOwner(this);
             sporeCloud.setParticle(ParticleTypes.CLOUD);
             sporeCloud.setRadiusPerTick(-sporeCloud.getRadius() / (float)sporeCloud.getDuration());
             sporeCloud.addEffect(new MobEffectInstance (MobEffects.MOVEMENT_SLOWDOWN, 200, 1));

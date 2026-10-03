@@ -2,7 +2,6 @@ package com.alganaut.hominid.client.entity.mellified;
 
 import com.alganaut.hominid.Hominid;
 import com.alganaut.hominid.client.entity.layer.HominidModelLayers;
-import com.alganaut.hominid.entity.goal.MellifiedSwellGoal;
 import com.alganaut.hominid.entity.mellified.Mellified;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

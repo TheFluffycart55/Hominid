@@ -4,7 +4,6 @@ import com.alganaut.hominid.Hominid;
 import com.alganaut.hominid.entity.bellman.Bellman;
 import com.alganaut.hominid.entity.famished.Famished;
 import com.alganaut.hominid.entity.fossilized.Fossilized;
-import com.alganaut.hominid.entity.fossilized.FossilizedRock;
 import com.alganaut.hominid.entity.incendiary.Incendiary;
 import com.alganaut.hominid.entity.juggernaut.Juggernaut;
 import com.alganaut.hominid.entity.mellified.Mellified;
@@ -61,12 +60,6 @@ public class HominidEntityCreator {
             "fossilized",
             EntityType.Builder.of(Fossilized::new, MobCategory.MONSTER)
                     .sized(0.65F, 2.3F)
-    );
-
-    public static final Supplier<EntityType<FossilizedRock>> ROCK = registerEntity(
-            "rock",
-            EntityType.Builder.<FossilizedRock>of(FossilizedRock::new, MobCategory.MISC)
-                    .sized(0.8F, 0.3F)
     );
 
     public static final Supplier<EntityType<Vampire>> VAMPIRE = registerEntity(

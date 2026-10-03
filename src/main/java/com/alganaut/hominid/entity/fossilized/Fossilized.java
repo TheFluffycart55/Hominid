@@ -32,8 +32,7 @@ public class Fossilized extends Monster {
     public enum AttackState {
         IDLE,
         PREPARING,
-        ANIMATING,
-        THROWING
+        ANIMATING
     }
 
     private final IdleAnimationController idleAnimationController = new IdleAnimationController(120);
@@ -41,6 +40,9 @@ public class Fossilized extends Monster {
     public final AnimationState throwAnimationState = new AnimationState();
     public AttackState attackState = AttackState.IDLE;
     private static final EntityDataAccessor<Boolean> HAS_BEEN_BRUSHED = SynchedEntityData.defineId(Fossilized.class, EntityDataSerializers.BOOLEAN);
+    public boolean isFalling;
+    public int fallTimer;
+    public int fallCooldown = 900;
 
     public Fossilized(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -72,7 +74,7 @@ public class Fossilized extends Monster {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new FossilizedRangedAttackGoal(this));
+        goalSelector.addGoal(1, new FossilizedToppleGoal(this));
         goalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0));
         goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0, 0.0F));
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -86,6 +88,18 @@ public class Fossilized extends Monster {
         if (level().isClientSide()) {
             idleAnimationController.tick(this, idleAnimationState);
         }
+        if (this.isAlive() && !fossilizedFallen()) {
+            this.fallTimer += 1;
+            if (this.fallTimer < 0) {
+                this.fallTimer = 0;
+            }
+
+            if (this.fallTimer >= this.fallCooldown) {
+                this.fallTimer = this.fallCooldown;
+                this.idleAnimationState.start(this.tickCount);
+                startFalling();
+                }
+            }
         super.tick();
     }
 
@@ -112,6 +126,10 @@ public class Fossilized extends Monster {
         super.handleEntityEvent(state);
     }
 
+    public boolean fossilizedFallen() {
+        return this.isFalling;
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
@@ -128,8 +146,6 @@ public class Fossilized extends Monster {
         }
         brushOffScute(itemstack, player, hand);
         return InteractionResult.sidedSuccess(level().isClientSide);
-
-
     }
 
     private void brushOffScute(ItemStack itemstack, Player player, InteractionHand hand) {
@@ -138,6 +154,11 @@ public class Fossilized extends Monster {
         playSound(SoundEvents.BRUSH_GENERIC);
         itemstack.hurtAndBreak(32, player, getSlotForHand(hand));
         entityData.set(HAS_BEEN_BRUSHED, true);
+    }
+
+    public void startFalling(){
+        System.out.println("Fallen");
+        this.fallTimer = 0;
     }
 
 }

@@ -1,11 +1,8 @@
-package com.alganaut.hominid.entity.goal;
+package com.alganaut.hominid.entity.mellified;
 
-import com.alganaut.hominid.entity.mellified.Mellified;
 import com.alganaut.hominid.registry.sound.HominidSounds;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-
-import java.util.EnumSet;
 
 public class MellifiedSwellGoal extends Goal {
     public final Mellified mellified;

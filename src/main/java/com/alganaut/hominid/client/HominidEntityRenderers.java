@@ -35,7 +35,6 @@ public class HominidEntityRenderers {
         event.registerEntityRenderer(HominidEntityCreator.JUGGERNAUT.get(), JuggernautRenderer::new);
         event.registerEntityRenderer(HominidEntityCreator.BELLMAN.get(), BellmanRenderer::new);
         event.registerEntityRenderer(HominidEntityCreator.FOSSILIZED.get(), FossilizedRenderer::new);
-        event.registerEntityRenderer(HominidEntityCreator.ROCK.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(HominidEntityCreator.VAMPIRE.get(), VampireRenderer::new);
     }
 
